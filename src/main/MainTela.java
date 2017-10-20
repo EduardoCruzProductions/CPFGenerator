@@ -3,6 +3,8 @@ package main;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Random;
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 import util.ValidaCPF;
 
@@ -13,6 +15,9 @@ public class MainTela extends javax.swing.JFrame {
     private Integer tentativas = 0;
     private Integer acertos = 0;
     private Integer erros = 0;
+    private Integer resultadosIguais = 0;
+
+    Thread processThread;
 
     public MainTela() {
         initComponents();
@@ -35,9 +40,11 @@ public class MainTela extends javax.swing.JFrame {
         lbErros = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
         lbAcertos = new javax.swing.JLabel();
+        jButton3 = new javax.swing.JButton();
+        jLabel6 = new javax.swing.JLabel();
+        lbResultadosIguais = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
         lbResultValid = new javax.swing.JLabel();
-        jButton3 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -81,18 +88,24 @@ public class MainTela extends javax.swing.JFrame {
         lbAcertos.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
         lbAcertos.setText("0");
 
-        jLabel7.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
-        jLabel7.setText("Resultados Válidos:");
-
-        lbResultValid.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
-        lbResultValid.setText("0");
-
         jButton3.setText("Start");
         jButton3.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 jButton3ActionPerformed(evt);
             }
         });
+
+        jLabel6.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        jLabel6.setText("Resultados Iguais:");
+
+        lbResultadosIguais.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
+        lbResultadosIguais.setText("0");
+
+        jLabel7.setFont(new java.awt.Font("Dialog", 1, 20)); // NOI18N
+        jLabel7.setText("Resultados Válidos:");
+
+        lbResultValid.setFont(new java.awt.Font("Dialog", 1, 20)); // NOI18N
+        lbResultValid.setText("0");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -122,6 +135,10 @@ public class MainTela extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(lbAcertos))
                     .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel6)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(lbResultadosIguais))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel7)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(lbResultValid)))
@@ -145,17 +162,21 @@ public class MainTela extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
                     .addComponent(lbErros))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 12, Short.MAX_VALUE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel6)
+                    .addComponent(lbResultadosIguais))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel5)
                     .addComponent(lbAcertos))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 232, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel7)
                     .addComponent(lbResultValid))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -168,7 +189,9 @@ public class MainTela extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
@@ -176,11 +199,33 @@ public class MainTela extends javax.swing.JFrame {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         onExecut = false;
+        try {
+
+            processThread.join();
+            amont();
+
+        } catch (InterruptedException ex) {
+
+            JOptionPane.showMessageDialog(null, "Erro de interrupção de processo!\n" + ex.getMessage(), "InternalSystem", JOptionPane.ERROR_MESSAGE);
+
+        }
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
         onExecut = true;
-        runi();
+
+        processThread = new Thread() {
+
+            public void run() {
+
+                process();
+
+            }
+
+        };
+
+        processThread.start();
+
     }//GEN-LAST:event_jButton3ActionPerformed
 
     public static void main(String args[]) {
@@ -222,6 +267,7 @@ public class MainTela extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel5;
+    private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
@@ -229,6 +275,7 @@ public class MainTela extends javax.swing.JFrame {
     private javax.swing.JLabel lbAcertos;
     private javax.swing.JLabel lbErros;
     private javax.swing.JLabel lbResultValid;
+    private javax.swing.JLabel lbResultadosIguais;
     private javax.swing.JLabel lbTentativas;
     private javax.swing.JTable table;
     // End of variables declaration//GEN-END:variables
@@ -240,106 +287,123 @@ public class MainTela extends javax.swing.JFrame {
 
     }
 
-    private void amont(){
-        
+    private void amont() {
+
         lbAcertos.setText(acertos.toString());
         lbErros.setText(erros.toString());
         lbTentativas.setText(tentativas.toString());
-        
+        lbResultadosIguais.setText(resultadosIguais.toString());
+
         lbResultValid.setText(Integer.toString(listCpf.size()));
-        
+
         updateTable();
-        
-        
+
     }
-    
-    private void updateTable(){
-        
+
+    private void updateProgress() {
+
+        SwingUtilities.invokeLater(new Runnable() {
+
+            public void run() {
+
+                lbAcertos.setText(acertos.toString());
+                lbErros.setText(erros.toString());
+                lbTentativas.setText(tentativas.toString());
+                lbResultadosIguais.setText(resultadosIguais.toString());
+
+                lbResultValid.setText(Integer.toString(listCpf.size()));
+
+            }
+
+        });
+
+    }
+
+    private void updateTable() {
+
         DefaultTableModel modelo = new DefaultTableModel();
-        
+
         modelo.addColumn("Index");
         modelo.addColumn("CPF");
-        
-        for(Cpf cpf : listCpf){
-            
+
+        for (Cpf cpf : listCpf) {
+
             modelo.addRow(new Object[]{
-                
                 cpf.index,
                 ValidaCPF.imprimeCPF(cpf.cpf)
-                
-            });
-            
-        }
-        
-        table.setModel(modelo);
-        
-    }
-    
-    private void  runi() {
 
-        while(onExecut){
-            
+            });
+
+        }
+
+        table.setModel(modelo);
+
+    }
+
+    private void process() {
+
+        while (onExecut) {
+
+            tentativas++;
+
             Random r = new Random();
-            
+
             int[] vet = new int[11];
 
             String t = "";
-            
+
             for (int i = 0; i < vet.length; i++) {
 
                 t += Integer.toString(r.nextInt(10));
 
             }
-            
-            if(ValidaCPF.isCPF(t)){
-                
+
+            if (ValidaCPF.isCPF(t)) {
+
                 acertos++;
-                
+
                 boolean nExist = true;
-                
-                for(Cpf cpf : listCpf){
-                    
-                    if(cpf.equals(t)){
+
+                for (Cpf c : listCpf) {
+
+                    if (c.cpf.equals(t)) {
                         nExist = false;
+                        resultadosIguais++;
                         break;
                     }
-                    
+
                 }
-                
-                if(nExist){
-                    
+
+                if (nExist) {
+
                     Cpf c = new Cpf();
-                    
-                    if(listCpf.isEmpty()){
-                        
+
+                    if (listCpf.isEmpty()) {
+
                         c.index = 0;
-                        
-                    }else{
-                        
-                        c.index = listCpf.size() - 1;
-                        
+
+                    } else {
+
+                        c.index = listCpf.size();
+
                     }
-                    
+
                     c.cpf = t;
-                    
+
                     listCpf.add(c);
-                    
+
                 }
-                
-            }else{
-                
+
+            } else {
+
                 erros++;
-                
+
             }
-            
-            tentativas++;
-            
-            System.out.println("Executo");
-            System.out.println(acertos);
-            amont();
-            
+
+            updateProgress();
+
         }
-        
+
     }
 
 }
