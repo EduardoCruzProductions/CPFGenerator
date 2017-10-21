@@ -1,5 +1,7 @@
 package main;
 
+import entidades.Bench;
+import entidades.Cpf;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Random;
@@ -10,6 +12,8 @@ import util.ValidaCPF;
 
 public class MainTela extends javax.swing.JFrame {
 
+    public static List<Bench> listBench = new ArrayList<>();
+    
     private boolean onExecut = false;
     private List<Cpf> listCpf = new ArrayList<>();
     private Integer tentativas = 0;
@@ -19,9 +23,14 @@ public class MainTela extends javax.swing.JFrame {
 
     Thread processThread;
 
+    private long timeStart;
+    private long timeStop;
+    private float currentTimeInSeconds = 0;
+    
     public MainTela() {
         initComponents();
         amont();
+        manageBtn("restart");
     }
 
     @SuppressWarnings("unchecked")
@@ -31,8 +40,8 @@ public class MainTela extends javax.swing.JFrame {
         jPanel1 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         table = new javax.swing.JTable();
-        jButton1 = new javax.swing.JButton();
-        jButton2 = new javax.swing.JButton();
+        btnStop = new javax.swing.JButton();
+        btnRestart = new javax.swing.JButton();
         jSeparator1 = new javax.swing.JSeparator();
         jLabel1 = new javax.swing.JLabel();
         lbTentativas = new javax.swing.JLabel();
@@ -40,12 +49,12 @@ public class MainTela extends javax.swing.JFrame {
         lbErros = new javax.swing.JLabel();
         jLabel5 = new javax.swing.JLabel();
         lbAcertos = new javax.swing.JLabel();
-        jButton3 = new javax.swing.JButton();
+        btnStart = new javax.swing.JButton();
         jLabel6 = new javax.swing.JLabel();
         lbResultadosIguais = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
         lbResultValid = new javax.swing.JLabel();
-        jButton4 = new javax.swing.JButton();
+        btnBench = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -62,14 +71,19 @@ public class MainTela extends javax.swing.JFrame {
         ));
         jScrollPane1.setViewportView(table);
 
-        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/stop.png"))); // NOI18N
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        btnStop.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/stop.png"))); // NOI18N
+        btnStop.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                btnStopActionPerformed(evt);
             }
         });
 
-        jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/restart.png"))); // NOI18N
+        btnRestart.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/restart.png"))); // NOI18N
+        btnRestart.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnRestartActionPerformed(evt);
+            }
+        });
 
         jLabel1.setFont(new java.awt.Font("Dialog", 1, 18)); // NOI18N
         jLabel1.setText("Tentativas:");
@@ -91,10 +105,10 @@ public class MainTela extends javax.swing.JFrame {
         lbAcertos.setForeground(new java.awt.Color(0, 51, 255));
         lbAcertos.setText("0");
 
-        jButton3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/start.png"))); // NOI18N
-        jButton3.addActionListener(new java.awt.event.ActionListener() {
+        btnStart.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/start.png"))); // NOI18N
+        btnStart.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton3ActionPerformed(evt);
+                btnStartActionPerformed(evt);
             }
         });
 
@@ -111,7 +125,12 @@ public class MainTela extends javax.swing.JFrame {
         lbResultValid.setForeground(new java.awt.Color(0, 51, 255));
         lbResultValid.setText("0");
 
-        jButton4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/bench.png"))); // NOI18N
+        btnBench.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/bench.png"))); // NOI18N
+        btnBench.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnBenchActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -123,13 +142,13 @@ public class MainTela extends javax.swing.JFrame {
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 468, Short.MAX_VALUE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                        .addComponent(jButton4)
+                        .addComponent(btnBench)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButton2)
+                        .addComponent(btnRestart)
                         .addGap(18, 18, 18)
-                        .addComponent(jButton1)
+                        .addComponent(btnStop)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jButton3))
+                        .addComponent(btnStart))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -157,11 +176,12 @@ public class MainTela extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jButton1)
-                        .addComponent(jButton2)
-                        .addComponent(jButton3))
-                    .addComponent(jButton4))
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addComponent(btnRestart, javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(btnStop)
+                            .addComponent(btnStart)))
+                    .addComponent(btnBench))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jSeparator1, javax.swing.GroupLayout.PREFERRED_SIZE, 10, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -205,7 +225,10 @@ public class MainTela extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void btnStopActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnStopActionPerformed
+        
+        manageBtn("stop");
+        
         onExecut = false;
         try {
 
@@ -217,9 +240,18 @@ public class MainTela extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(null, "Erro de interrupção de processo!\n" + ex.getMessage(), "InternalSystem", JOptionPane.ERROR_MESSAGE);
 
         }
-    }//GEN-LAST:event_jButton1ActionPerformed
+        
+        timeStop = System.currentTimeMillis();
+        currentTimeInSeconds += (timeStop - timeStart)/1000;
+        
+        System.out.println(currentTimeInSeconds);
+        
+    }//GEN-LAST:event_btnStopActionPerformed
 
-    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+    private void btnStartActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnStartActionPerformed
+        
+        manageBtn("start");
+        
         onExecut = true;
 
         processThread = new Thread() {
@@ -233,8 +265,31 @@ public class MainTela extends javax.swing.JFrame {
         };
 
         processThread.start();
+        
+        timeStart = System.currentTimeMillis();
 
-    }//GEN-LAST:event_jButton3ActionPerformed
+    }//GEN-LAST:event_btnStartActionPerformed
+
+    private void btnRestartActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRestartActionPerformed
+
+        manageBtn("restart");
+        addData();
+        clear();
+        
+    }//GEN-LAST:event_btnRestartActionPerformed
+
+    private void btnBenchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBenchActionPerformed
+        
+        System.out.println("Tentativas/s: "+listBench.get(0).getTentativasPSecond());
+        System.out.println("Erros/s: "+listBench.get(0).getErrosPSecond());
+        System.out.println("Acertos/s: "+listBench.get(0).getAcertosPSecond());
+        
+        System.out.println("");
+        
+        System.out.println("Acertos: "+listBench.get(0).getProporcaoAcerto()+"%");
+        System.out.println("Erros: "+listBench.get(0).getProporcaoErros()+"%");
+        
+    }//GEN-LAST:event_btnBenchActionPerformed
 
     public static void main(String args[]) {
         /* Set the Nimbus look and feel */
@@ -269,10 +324,10 @@ public class MainTela extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
-    private javax.swing.JButton jButton4;
+    private javax.swing.JButton btnBench;
+    private javax.swing.JButton btnRestart;
+    private javax.swing.JButton btnStart;
+    private javax.swing.JButton btnStop;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel5;
@@ -289,13 +344,6 @@ public class MainTela extends javax.swing.JFrame {
     private javax.swing.JTable table;
     // End of variables declaration//GEN-END:variables
 
-    private class Cpf {
-
-        int index;
-        String cpf;
-
-    }
-
     private void amont() {
 
         lbAcertos.setText(acertos.toString());
@@ -307,6 +355,59 @@ public class MainTela extends javax.swing.JFrame {
 
         updateTable();
 
+    }
+    
+    private void clear(){
+        
+        listCpf.clear();
+        onExecut = false;
+        tentativas = 0;
+        acertos = 0;
+        erros = 0;
+        resultadosIguais = 0;
+        
+        timeStart = 0;
+        timeStop = 0;
+        currentTimeInSeconds = 0.f;
+
+        processThread = null;
+        
+        amont();
+        
+    }
+    
+    private void manageBtn(String status){
+        
+        switch(status){
+            
+            case "start":
+                
+                btnStart.setEnabled(false);
+                btnStop.setEnabled(true);
+                btnRestart.setEnabled(false);
+                btnBench.setEnabled(false);
+                
+                break;
+            
+            case "stop":
+                
+                btnStart.setEnabled(true);
+                btnStop.setEnabled(false);
+                btnRestart.setEnabled(true);
+                btnBench.setEnabled(false);
+                
+                break;
+                
+            case "restart":
+                
+                btnStart.setEnabled(true);
+                btnStop.setEnabled(false);
+                btnRestart.setEnabled(false);
+                btnBench.setEnabled(true);
+                break;
+                
+        }
+        
     }
 
     private void updateProgress() {
@@ -338,8 +439,8 @@ public class MainTela extends javax.swing.JFrame {
         for (Cpf cpf : listCpf) {
 
             modelo.addRow(new Object[]{
-                cpf.index,
-                ValidaCPF.imprimeCPF(cpf.cpf)
+                cpf.getIndex(),
+                ValidaCPF.imprimeCPF(cpf.getCpf())
 
             });
 
@@ -375,7 +476,7 @@ public class MainTela extends javax.swing.JFrame {
 
                 for (Cpf c : listCpf) {
 
-                    if (c.cpf.equals(t)) {
+                    if (c.getCpf().equals(t)) {
                         nExist = false;
                         resultadosIguais++;
                         break;
@@ -389,15 +490,15 @@ public class MainTela extends javax.swing.JFrame {
 
                     if (listCpf.isEmpty()) {
 
-                        c.index = 0;
+                        c.setIndex(0);
 
                     } else {
 
-                        c.index = listCpf.size();
-
+                        c.setIndex(listCpf.size());
+                        
                     }
 
-                    c.cpf = t;
+                    c.setCpf(t);
 
                     listCpf.add(c);
 
@@ -415,4 +516,18 @@ public class MainTela extends javax.swing.JFrame {
 
     }
 
+    private void addData(){
+        
+        Bench b = new Bench();
+        b.setAcertos(acertos);
+        b.setErros(erros);
+        b.setListCpf(listCpf);
+        b.setResultadosIguais(resultadosIguais);
+        b.setTime(currentTimeInSeconds);
+        b.setTentativas(tentativas);
+        
+        listBench.add(b);
+       
+    }
+    
 }
